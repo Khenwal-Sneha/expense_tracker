@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 min-h-screen p-8 text-white font-sans">
+
+
+<!-- Sidebar -->
+<div class="flex">
+    <div id="sidebar" class="bg-white bg-opacity-10 backdrop-blur-lg h-screen w-64 p-6 space-y-6 shadow-xl fixed top-0 left-0 transition-transform transform -translate-x-full md:translate-x-0 z-50">
+        <h2 class="text-2xl font-bold text-center mb-6 text-white">💸 ExpenseMate</h2>
+        <nav class="space-y-4 text-white font-medium">
+            <a href="/dashboard" class="flex items-center space-x-3 hover:text-purple-300 transition"><i data-lucide="layout-dashboard"></i><span>Pie Representation</span></a>
+            <a href="/expenses/export/excel" class="flex items-center space-x-3 hover:text-green-300 transition"><i data-lucide="download"></i><span>Download Excel</span></a>
+            <a href="/expenses/chart" class="flex items-center space-x-3 hover:text-blue-300 transition"><i data-lucide="bar-chart"></i><span>Most Spent</span></a>
+            <a href="/expenses/trend" class="flex items-center space-x-3 hover:text-yellow-300 transition"><i data-lucide="trending-up"></i><span>Monthly Trend</span></a>
+            <a href="/profile" class="flex items-center space-x-3 hover:text-cyan-300 transition"><i data-lucide="user"></i><span>Profile</span></a>
+            <a href="/logout" class="flex items-center space-x-3 hover:text-red-300 transition"><i data-lucide="log-out"></i><span>Logout</span></a>
+            <a href="/guide" class="flex items-center space-x-3 hover:text-pink-300 transition"><i data-lucide="info"></i><span>We Guide You</span></a>
+        </nav>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 md:ml-64 p-6">
+        <!-- Sidebar Toggle -->
+        <button onclick="toggleSidebar()" class="md:hidden mb-4 bg-white bg-opacity-20 p-2 rounded-full shadow hover:bg-opacity-30 transition">
+            <i data-lucide="menu"></i>
+        </button>
+
+        <h1 class="text-4xl font-extrabold text-center mb-6">My Expenses</h1>
+
+        <!-- Budget Summary -->
+        <div class="bg-white bg-opacity-10 backdrop-blur-md rounded-2xl shadow-lg p-6 mb-8 space-y-2 text-center">
+            <h3 class="text-xl font-semibold">Monthly Budget: ₹<span th:text="${budget} ?: 'Not Set'"></span></h3>
+            <h4 class="text-lg">Spent This Month: ₹<span th:text="${monthlySpent}"></span></h4>
+            <div th:if="${budget != null}">
+                <p class="text-white font-medium">Usage:
+                    <span class="font-bold text-yellow-200" th:text="${#numbers.formatDecimal(usagePercent, 1, 2)}"></span>%
+                </p>
+                <div class="relative w-full max-w-sm mx-auto">
+                    <progress th:value="${usagePercent}" max="100" class="w-full h-4 rounded-full overflow-hidden bg-white bg-opacity-30">
+                    </progress>
+                </div>
+                <div th:if="${usagePercent >= 100}" class="text-red-600 font-bold mt-2">❌ Budget Exceeded!</div>
+                <div th:if="${usagePercent >= 90 && usagePercent < 100}" class="text-yellow-300 font-semibold mt-2">⚠️ You’re about to reach your budget!</div>
+            </div>
+        </div>
+
+        <!-- Filter Form -->
+        <form th:action="@{/expenses}" method="get" class="bg-white bg-opacity-10 backdrop-blur-md p-6 rounded-2xl shadow-md mb-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block mb-1 font-semibold text-white">Start Date:</label>
+                <input type="date" name="startDate" class="w-full border rounded px-3 py-2 text-black" th:value="${startDate}" />
+            </div>
+            <div>
+                <label class="block mb-1 font-semibold text-white">End Date:</label>
+                <input type="date" name="endDate" class="w-full border rounded px-3 py-2 text-black" th:value="${endDate}" />
+            </div>
+            <div>
+                <label class="block mb-1 font-semibold text-white">Category:</label>
+                <select id="category" name="category" class="w-full border rounded px-3 py-2 text-black" onchange="toggleCustomCategory(this)">
+                    <option value="">All</option>
+                    <option value="Food" th:selected="${category == 'Food'}">Food</option>
+                    <option value="Transport" th:selected="${category == 'Transport'}">Transport</option>
+                    <option value="Shopping" th:selected="${category == 'Shopping'}">Shopping</option>
+                    <option value="Utilities" th:selected="${category == 'Utilities'}">Utilities</option>
+                    <option value="Entertainment" th:selected="${category == 'Entertainment'}">Entertainment</option>
+                    <option value="Other" th:selected="${category == 'Other'}">Other</option>
+                </select>
+            </div>
+            <div id="customCategoryDiv" class="md:col-span-3" style="display: none;">
+                <label class="block mb-1 font-semibold text-white">Custom Category:</label>
+                <input type="text" id="customCategory" name="customCategory" class="w-full border rounded px-3 py-2 text-black" th:value="${customCategory}" />
+            </div>
+            <div class="md:col-span-3 text-right">
+                <button type="submit" class="bg-white text-purple-700 font-semibold px-6 py-2 rounded-xl hover:bg-purple-200 transition shadow">Filter</button>
+            </div>
+        </form>
+
+        <!-- Add Expense Button -->
+        <div class="text-right mb-4">
+            <a href="/expenses/add" class="bg-white text-pink-600 font-semibold px-6 py-2 rounded-xl hover:bg-pink-200 transition shadow">Add Expense</a>
+        </div>
+
+        <!-- Expenses Table -->
+        <div class="overflow-x-auto">
+            <table class="min-w-full bg-white bg-opacity-10 backdrop-blur-md rounded-xl shadow-md">
+                <thead>
+                <tr class="bg-white bg-opacity-20 text-white">
+                    <th class="py-3 px-4 text-left font-semibold">Title</th>
+                    <th class="py-3 px-4 text-left font-semibold">Category</th>
+                    <th class="py-3 px-4 text-left font-semibold">Amount</th>
+                    <th class="py-3 px-4 text-left font-semibold">Date</th>
+                    <th class="py-3 px-4 text-center font-semibold">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="expense : ${expenses}" class="border-b border-white border-opacity-20 hover:bg-white hover:bg-opacity-10 transition text-white">
+                    <td class="py-3 px-4" th:text="${expense.title}"></td>
+                    <td class="py-3 px-4" th:text="${expense.category}"></td>
+                    <td class="py-3 px-4" th:text="${expense.amount}"></td>
+                    <td class="py-3 px-4" th:text="${expense.date}"></td>
+                    <td class="py-3 px-4 text-center">
+                        <a th:href="@{'/expenses/edit/' + ${expense.id}}" class="text-blue-200 hover:underline mr-2">Edit</a>
+                        <a th:href="@{'/expenses/delete/' + ${expense.id}}" class="text-red-300 hover:underline">Delete</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        sidebar.classList.toggle("-translate-x-full");
+    }
+
+    function toggleCustomCategory(select) {
+        const customDiv = document.getElementById("customCategoryDiv");
+        customDiv.style.display = select.value === "Other" ? "block" : "none";
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+        toggleCustomCategory(document.getElementById("category"));
+        lucide.createIcons();
+    });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Top Spending Categories</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 min-h-screen p-8 text-white font-sans">
+
+<div class="max-w-4xl mx-auto bg-white bg-opacity-10 backdrop-blur-md rounded-2xl p-8 shadow-xl">
+  <h2 class="text-3xl font-bold text-center mb-6">Top 5 Spending Categories</h2>
+
+  <div class="flex justify-center gap-4 mb-6 flex-wrap">
+    <button onclick="showChart('bar')" class="bg-white text-purple-700 px-4 py-2 rounded-lg shadow hover:bg-purple-200 transition">Bar Chart</button>
+    <button onclick="showChart('pie')" class="bg-white text-pink-700 px-4 py-2 rounded-lg shadow hover:bg-pink-200 transition">Pie Chart</button>
+    <button onclick="exportChart()" class="bg-white text-red-700 px-4 py-2 rounded-lg shadow hover:bg-red-200 transition">Export Chart</button>
+  </div>
+
+  <div class="relative w-full h-[400px]">
+    <canvas id="chartCanvas" class="mx-auto w-full h-full"></canvas>
+  </div>
+  <div class="mt-6 text-center">
+    <a href="/expenses"
+       class="inline-block bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-semibold px-6 py-2 rounded-lg transition duration-200">
+      ⬅ Back to Dashboard
+    </a>
+  </div>
+</div>
+
+<script th:inline="javascript">
+  const categories = [[${categories}]];
+  const amounts = [[${amounts}]];
+
+  const ctx = document.getElementById('chartCanvas').getContext('2d');
+  let currentChart;
+
+  // Common dataset and colors
+  const dataset = {
+    labels: categories,
+    datasets: [{
+      label: 'Amount Spent',
+      data: amounts,
+      backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'],
+      borderColor: '#111827',
+      borderWidth: 1,
+      hoverOffset: 12
+    }]
+  };
+
+  // Data labels plugin config
+  const dataLabelPlugin = ChartDataLabels;
+
+  const barConfig = {
+    type: 'bar',
+    data: dataset,
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,  // allow custom height
+      animation: {
+        duration: 1000,
+        easing: 'easeOutBounce'
+      },
+      plugins: {
+        datalabels: {
+          color: '#ffffff',
+          anchor: 'end',
+          align: 'top',
+          font: {
+            weight: 'bold'
+          },
+          formatter: (value) => `₹${value}`
+        },
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            color: 'white'
+          },
+          grid: {
+            color: 'rgba(255,255,255,0.2)'
+          }
+        },
+        x: {
+          ticks: {
+            color: 'white'
+          },
+          grid: {
+            color: 'rgba(255,255,255,0.2)'
+          },
+          // Prevent duplicate labels
+          stacked: false
+        }
+      }
+    },
+    plugins: [dataLabelPlugin]
+  };
+
+  const pieConfig = {
+    type: 'pie',
+    data: dataset,
+    options: {
+      responsive: true,
+      animation: {
+        animateRotate: true,
+        animateScale: true,
+        duration: 1500,
+        easing: 'easeOutCirc'
+      },
+      plugins: {
+        datalabels: {
+          color: '#ffffff',
+          font: {
+            weight: 'bold'
+          },
+          formatter: (value, context) => {
+            const total = context.chart._metasets[0].total || context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+            const percent = ((value / total) * 100).toFixed(1);
+            return `${percent}%`;
+          }
+        },
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: 'white'
+          }
+        },
+        tooltip: {
+          backgroundColor: '#1f2937',
+          titleColor: '#fff',
+          bodyColor: '#f3f4f6'
+        }
+      }
+    },
+    plugins: [
+      dataLabelPlugin,
+      {
+        id: 'pieShadow',
+        beforeDraw: chart => {
+          const ctx = chart.ctx;
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+          ctx.shadowBlur = 20;
+          ctx.shadowOffsetX = 5;
+          ctx.shadowOffsetY = 5;
+        },
+        afterDraw: chart => {
+          const ctx = chart.ctx;
+          ctx.shadowColor = 'transparent';
+          ctx.shadowBlur = 0;
+          ctx.shadowOffsetX = 0;
+          ctx.shadowOffsetY = 0;
+        }
+      }
+    ]
+  };
+
+  function showChart(type) {
+    if (currentChart) {
+      currentChart.destroy();
+    }
+    currentChart = new Chart(ctx, type === 'bar' ? barConfig : pieConfig);
+  }
+
+  function exportChart() {
+    const link = document.createElement('a');
+    link.download = 'spending-chart.png';
+    link.href = document.getElementById('chartCanvas').toDataURL();
+    link.click();
+  }
+
+  // Load bar chart on page load
+  window.onload = () => showChart('bar');
+</script>
+
+</body>
+</html>

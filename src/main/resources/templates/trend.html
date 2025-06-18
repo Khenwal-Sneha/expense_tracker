@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Monthly Expense Trend</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+</head>
+<body class="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 min-h-screen p-8 text-white font-sans">
+
+<div class="max-w-5xl mx-auto bg-white bg-opacity-10 backdrop-blur-md rounded-2xl p-8 shadow-xl">
+  <h2 class="text-3xl font-bold text-center mb-6">📈 Monthly Expense Trend</h2>
+
+  <div class="flex justify-center gap-4 mb-4">
+    <button id="toggleChartBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg shadow-md">
+      Toggle Line / Area Chart
+    </button>
+    <button id="downloadBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md">
+      Download Chart as Image
+    </button>
+  </div>
+
+  <div class="relative w-full max-w-4xl mx-auto">
+    <canvas id="lineChart" height="300"></canvas>
+  </div>
+
+  <div class="mt-6 text-center">
+    <a href="/expenses"
+       class="inline-block bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-semibold px-6 py-2 rounded-lg transition duration-200">
+      ⬅ Back to Dashboard
+    </a>
+  </div>
+</div>
+
+<script th:inline="javascript">
+  let months = [[${months}]];
+  let amounts = [[${amounts}]];
+
+  const ctx = document.getElementById('lineChart').getContext('2d');
+
+  let isArea = true;
+
+  const config = {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [{
+        label: 'Total Spent (₹)',
+        data: amounts,
+        borderColor: '#4e73df',
+        backgroundColor: 'rgba(78, 115, 223, 0.1)',
+        fill: isArea,
+        tension: 0.4,
+        pointRadius: 5,
+        pointHoverRadius: 7,
+        pointBackgroundColor: '#4e73df',
+        pointBorderColor: '#fff',
+      }]
+    },
+    options: {
+      responsive: true,
+      animation: {
+        duration: 1500,
+        easing: 'easeOutQuart'
+      },
+      plugins: {
+        legend: {
+          labels: { color: '#ffffff', font: { size: 14, weight: 'bold' } }
+        },
+        title: {
+          display: true,
+          text: 'Spending Over Months',
+          color: '#ffffff',
+          font: { size: 18 }
+        },
+        datalabels: {
+          color: '#fff',
+          align: 'top',
+          anchor: 'end',
+          font: {
+            weight: 'bold'
+          },
+          formatter: (value) => `₹${value}`
+        },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          backgroundColor: '#1e293b',
+          bodyColor: '#f8fafc'
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#fff' },
+          grid: { color: 'rgba(255,255,255,0.1)' }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: { color: '#fff' },
+          grid: { color: 'rgba(255,255,255,0.1)' },
+          title: {
+            display: true,
+            text: 'Amount (₹)',
+            color: '#fff',
+            font: { size: 14, weight: 'bold' }
+          }
+        }
+      }
+    },
+    plugins: [ChartDataLabels, {
+      id: '3dShadowLine',
+      beforeDraw(chart) {
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 12;
+        ctx.shadowOffsetX = 4;
+        ctx.shadowOffsetY = 4;
+      },
+      afterDraw(chart) {
+        chart.ctx.restore();
+      }
+    }]
+  };
+
+  let chart = new Chart(ctx, config);
+
+  // Toggle Line <-> Area chart
+  document.getElementById('toggleChartBtn').addEventListener('click', () => {
+    isArea = !isArea;
+    chart.data.datasets[0].fill = isArea;
+    chart.update();
+  });
+
+  // Download chart as image
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    const link = document.createElement('a');
+    link.download = 'monthly_expense_trend.png';
+    link.href = document.getElementById('lineChart').toDataURL('image/png');
+    link.click();
+  });
+</script>
+</body>
+</html>

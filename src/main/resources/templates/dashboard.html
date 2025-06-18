@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Expense Summary Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 min-h-screen p-8 text-white font-sans">
+
+<div class="max-w-4xl mx-auto bg-white bg-opacity-10 backdrop-blur-md rounded-2xl p-8 shadow-xl">
+    <h2 class="text-3xl font-bold text-center mb-6">Expense Summary Dashboard</h2>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-center mb-8">
+        <div class="bg-white bg-opacity-20 p-6 rounded-xl shadow-md">
+            <p class="text-lg font-semibold">Monthly Total</p>
+            <p class="text-2xl font-bold">₹<span th:text="${monthlyTotal}">0</span></p>
+        </div>
+        <div class="bg-white bg-opacity-20 p-6 rounded-xl shadow-md">
+            <p class="text-lg font-semibold">Weekly Total</p>
+            <p class="text-2xl font-bold">₹<span th:text="${weeklyTotal}">0</span></p>
+        </div>
+    </div>
+
+    <!-- Toggle Buttons -->
+    <div class="flex justify-center gap-4 mb-6">
+        <button id="pieBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg shadow-md">
+            Pie Chart
+        </button>
+        <button id="barBtn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg shadow-md">
+            Bar Chart
+        </button>
+        <button id="downloadBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg shadow-md">
+            Download Image
+        </button>
+    </div>
+
+    <div class="relative w-full max-w-2xl mx-auto">
+        <canvas id="categoryChart"></canvas>
+    </div>
+
+    <div class="mt-6 text-center">
+        <a href="/expenses"
+           class="inline-block bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-semibold px-6 py-2 rounded-lg transition duration-200">
+            ⬅ Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<script th:inline="javascript">
+    const categoryLabels = [[${categoryLabels}]];
+    const categoryData = [[${categoryData}]];
+
+    let chartType = 'pie';
+    let chart;
+
+    const ctx = document.getElementById('categoryChart').getContext('2d');
+
+    const backgroundColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+
+    const config = {
+      type: chartType,
+      data: {
+        labels: categoryLabels,
+        datasets: [{
+          label: 'Expenses by Category',
+          data: categoryData,
+          backgroundColor: backgroundColors,
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        animation: {
+          animateRotate: true,
+          animateScale: true,
+          duration: 1200,
+          easing: 'easeOutQuart'
+        },
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              color: '#fff',
+              font: { weight: 'bold' }
+            }
+          },
+          title: {
+            display: true,
+            text: 'Category-wise Expenses',
+            color: '#fff',
+            font: { size: 18 }
+          },
+          tooltip: {
+            backgroundColor: '#111827',
+            bodyColor: '#f9fafb'
+          }
+        }
+      },
+      plugins: [{
+        id: '3dShadow',
+        beforeDraw(chart) {
+          const ctx = chart.ctx;
+          ctx.save();
+          ctx.shadowColor = 'rgba(0,0,0,0.5)';
+          ctx.shadowBlur = 20;
+          ctx.shadowOffsetX = 5;
+          ctx.shadowOffsetY = 5;
+        },
+        afterDraw(chart) {
+          const ctx = chart.ctx;
+          ctx.restore();
+        }
+      }]
+    };
+
+    function renderChart(type) {
+      if (chart) chart.destroy();
+      config.type = type;
+      chart = new Chart(ctx, config);
+    }
+
+    // Initial chart
+    renderChart(chartType);
+
+    // Event listeners
+    document.getElementById('pieBtn').addEventListener('click', () => {
+      chartType = 'pie';
+      renderChart(chartType);
+    });
+
+    document.getElementById('barBtn').addEventListener('click', () => {
+      chartType = 'bar';
+      renderChart(chartType);
+    });
+
+    document.getElementById('downloadBtn').addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = 'expense_chart.png';
+      link.href = document.getElementById('categoryChart').toDataURL('image/png');
+      link.click();
+    });
+</script>
+</body>
+</html>

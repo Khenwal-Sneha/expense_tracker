@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker - Home</title>
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+</head>
+<body class="bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 min-h-screen p-8 text-white font-sans flex items-center justify-center">
+
+    <div class="bg-white bg-opacity-10 backdrop-blur-md p-10 rounded-2xl shadow-xl text-center max-w-lg w-full mx-4">
+        <div class="flex justify-center mb-4">
+            <!-- Wallet icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M21 12.5V7.75A2.75 2.75 0 0018.25 5H5.75A2.75 2.75 0 003 7.75v8.5A2.75 2.75 0 005.75 19h12.5A2.75 2.75 0 0021 16.25V14.5M21 14h-4a1 1 0 100 2h4"/>
+            </svg>
+        </div>
+        <h1 class="text-3xl font-extrabold mb-4">Expense Tracker</h1>
+        <p class="text-lg italic mb-6">
+            “Beware of little expenses. A small leak will sink a great ship.”<br>
+            <span class="text-sm">— Benjamin Franklin</span>
+        </p>
+        <div class="flex justify-center gap-4">
+            <a href="/login"
+               class="bg-white text-purple-700 hover:bg-purple-100 font-semibold py-2 px-6 rounded-xl transition shadow-md">
+                Login
+            </a>
+            <a href="/register"
+               class="bg-white text-pink-600 hover:bg-pink-100 font-semibold py-2 px-6 rounded-xl transition shadow-md">
+                Register
+            </a>
+        </div>
+    </div>
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</body>
+</html>
